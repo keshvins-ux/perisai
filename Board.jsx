@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { CONTROLS, CONF_META } from "./data.js";
-import { Card, Eyebrow, Spark, Donut, Delta, Tag, Bar, Modal, scoreColor, riskColor } from "./ui.jsx";
+import { Card, Eyebrow, Spark, Donut, Shield, Delta, Tag, Bar, Modal, scoreColor, riskColor } from "./ui.jsx";
 
 export default function Board({ ps, goAdmin, D }) {
   const [lineage, setLineage] = useState(null);
@@ -32,33 +32,39 @@ export default function Board({ ps, goAdmin, D }) {
         </div>
         <h1 className="hero-verdict">
           Cyber risk is{" "}
-          <em style={{ color: overApp ? "var(--co)" : "var(--em)" }}>
-            {overApp ? "above" : "within"} the appetite you set
-          </em>
-          , compliance is <em style={{ color: scoreColor(compAvg) }}>partial and improving</em>,
-          and <em style={{ color: "var(--accent)" }}>{dueNow} decisions need you today</em>.
+          <em className="uv">{overApp ? "above" : "within"} the appetite you set</em>
+          , compliance is <em className="uv">partial and improving</em>,
+          and <em className="uv">{dueNow} decisions need you today</em>.
         </h1>
 
         <div className="hero-nums">
           <button className="hnum" onClick={() => document.getElementById("fold-risk")?.scrollIntoView({ behavior: "smooth" })}>
-            <span className="hnum-v" style={{ color: overApp ? "var(--co)" : "var(--em)" }}>{ps.riskIndex}<small>/{D.ORG.appetite}</small></span>
-            <span className="hnum-l">risk index vs appetite</span>
-            <Delta now={ps.riskIndex} prev={D.ORG.prevIndex} goodDown />
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <Shield value={ps.riskIndex} sub={`APPETITE ${D.ORG.appetite}`} bad={overApp} size={74} />
+              <div>
+                <span className="hnum-l" style={{ display: "block" }}>risk index vs appetite</span>
+                <Delta now={ps.riskIndex} prev={D.ORG.prevIndex} goodDown />
+              </div>
+            </div>
+            <span className="go">TRACE MOVEMENT ▸</span>
           </button>
           <button className="hnum" onClick={() => document.getElementById("fold-comp")?.scrollIntoView({ behavior: "smooth" })}>
             <span className="hnum-v" style={{ color: scoreColor(compAvg) }}>{compAvg}<small>%</small></span>
-            <span className="hnum-l">compliance across RMiT · GTRM · PDPA</span>
+            <span className="hnum-l">compliance across the frameworks that bind us</span>
             <Delta now={compAvg} prev={Math.round(D.REGULATORY.reduce((a,f)=>a+f.prev,0)/D.REGULATORY.length)} goodDown={false} />
+            <span className="go">OPEN DETAIL ▸</span>
           </button>
           <button className="hnum" onClick={goAdmin}>
             <span className="hnum-v" style={{ color: scoreColor(ps.machinePct) }}>{ps.machinePct}<small>%</small></span>
             <span className="hnum-l">of this report verified from live systems</span>
             <span className="hnum-x">{ps.coverage}% of estate visible{ps.blind.length > 0 ? " · ⚠ sources offline" : ""}</span>
+            <span className="go">VIEW SOURCES ▸</span>
           </button>
           <button className="hnum" onClick={() => document.getElementById("fold-radar")?.scrollIntoView({ behavior: "smooth" })}>
             <span className="hnum-v" style={{ color: threatMeta.color, fontSize: 25, lineHeight: 1.3 }}>{threatMeta.label}</span>
             <span className="hnum-l">sector threat level — {D.ORG.sector.split(" (")[0].toLowerCase()}</span>
             <span className="hnum-x">{D.RADAR.length} tracked campaigns · each with an adoptable action</span>
+            <span className="go">OPEN RADAR ▸</span>
           </button>
         </div>
       </section>

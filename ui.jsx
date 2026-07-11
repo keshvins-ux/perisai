@@ -74,3 +74,14 @@ export function Modal({ open, onClose, children }) {
 
 export const scoreColor = (v) => (v >= 80 ? "var(--em)" : v >= 60 ? "var(--am)" : "var(--co)");
 export const riskColor = (v) => (v >= 70 ? "var(--co)" : v >= 55 ? "var(--am)" : "var(--em)");
+
+export function Shield({ value, sub, size = 92, bad = false }) {
+  return (
+    <svg className="shieldg" width={size} height={size * 1.08} viewBox="0 0 120 130" role="img" aria-label={`Shield gauge ${value}`}>
+      <path d="M60 4 L114 24 V70 C114 98 92 118 60 126 C28 118 6 98 6 70 V24 Z" fill="var(--panel)" stroke="var(--line)" strokeWidth="2" />
+      <path d="M60 4 L114 24 V70 C114 98 92 118 60 126" fill="none" stroke={bad ? "var(--co)" : "var(--text)"} strokeWidth="3.5" strokeLinecap="round" />
+      <text x="60" y="64" textAnchor="middle" fontWeight="600" fontSize="32" fill="var(--text)">{value}</text>
+      <text x="60" y="84" textAnchor="middle" fontFamily="IBM Plex Mono, monospace" fontSize="10" letterSpacing="1.5" fill="var(--dim)">{sub}</text>
+    </svg>
+  );
+}

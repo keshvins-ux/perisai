@@ -1,12 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Inter+Tight:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 :root{
-  --ink:#f3f6f4; --panel:#ffffff; --panel2:#fbfdfc; --line:#e0e8e4;
-  --text:#1a2b2e; --muted:#5c716c; --dim:#93a5a0;
-  --em:#0e9f6e; --am:#c07a17; --co:#d64560; --accent:#0e8f80;
-  --ui:'Hanken Grotesk',sans-serif; --disp:'Fraunces',serif; --mono:'Spline Sans Mono',monospace;
+  --ink:#f4f1e9; --panel:#fdfcf7; --panel2:#fdfcf7; --line:#d8d2c0;
+  --text:#20241f; --muted:#5a5f52; --dim:#98917c;
+  --em:#3d7a5c; --am:#a8802f; --co:#9e4a4f; --accent:#8a6f2f;
+  --ui:'Inter Tight',sans-serif; --disp:'Inter Tight',sans-serif; --mono:'IBM Plex Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--ui);background:
-  radial-gradient(1200px 500px at 80% -10%, rgba(14,143,128,.07), transparent 60%),
   var(--ink);color:var(--text);min-height:100vh}
 small{font-size:.72em}
 button{font-family:var(--ui)}
@@ -359,3 +359,84 @@ button{font-family:var(--ui)}
 .decisions{box-shadow:0 1px 2px rgba(20,45,40,.05),0 6px 18px rgba(14,143,128,.08)}
 .topbar{background:var(--panel)}
 .foot{color:var(--dim)}
+
+
+/* ══ FINAL: the Perisai Ledger system ══ */
+.root{background:var(--ink)}
+.card,.fold,.hnum,.dec,.mod,.cj-box,.radar,.scen-card,.t2{border-radius:3px}
+.card,.fold,.hnum,.decisions{box-shadow:none}
+.fold{border-radius:3px}
+button,.ghost,.packbtn,.export,.status,.switch,.minitabs button,.co-switch{border-radius:3px}
+.topbar{background:var(--panel);border-bottom:1px solid var(--line)}
+.wordmark{font-family:var(--ui);font-weight:600;letter-spacing:5px;text-transform:uppercase;font-size:21px}
+.shield{color:var(--accent)}
+.tag{border-radius:2px}
+.tab{border-radius:3px 3px 0 0}
+.tab.on{background:var(--accent);color:#fdfcf7}
+.minitabs button.on{background:var(--accent);color:#fdfcf7;border-color:var(--accent)}
+.packbtn{background:var(--accent);color:#fdfcf7;letter-spacing:.5px;text-transform:uppercase;font-size:11px}
+.packbtn:hover{background:#6f5a24;filter:none}
+.ghost{border:1.5px solid var(--accent);color:var(--accent);font-weight:600}
+.ghost:hover{background:var(--accent);color:#fdfcf7;border-color:var(--accent)}
+
+/* verdict voice */
+.hero{padding:30px 8px 24px}
+.hero-verdict{font-family:'Source Serif 4',serif;font-weight:500;font-size:30px;line-height:1.45;max-width:34ch}
+.hero-verdict em.uv{font-style:normal;color:inherit;border-bottom:2px solid var(--accent);padding-bottom:1px}
+.hero-eyebrow{color:var(--dim)}
+
+/* ledger section labels: ink rule + faint rule */
+.bsec{color:var(--text);font-weight:500}
+.bsec::after{background:var(--text);height:1px;box-shadow:0 3px 0 #cfc8b2}
+
+/* tier-1 frame: decisions */
+.decisions{border:1.5px solid var(--text);position:relative;padding-top:26px;background:var(--panel)}
+.decisions>.eyebrow{position:absolute;top:-9px;left:14px;background:var(--panel);padding:0 8px;margin:0;color:var(--text);letter-spacing:2px}
+.dec{border:1px solid var(--line);background:var(--panel);transition:.15s}
+.dec:hover{border-color:var(--accent)}
+
+/* interaction signature */
+.go{display:block;color:var(--accent);font-family:var(--mono);font-size:10px;letter-spacing:1px;margin-top:8px}
+.hnum{background:var(--panel);transition:.15s}
+.hnum:hover{border-color:var(--accent);background:#fbf7ec;transform:none}
+.fold{transition:.15s}
+.fold:hover{border-color:var(--accent)}
+.fold-head:hover{background:#fbf7ec}
+.fold .chev{color:var(--accent)}
+.riskrow:hover,.scen:hover{background:#fbf7ec}
+.cell:hover{transform:none;border-color:var(--accent)}
+.ifasked-btn{color:var(--accent)}
+.lnk,.rr-code{color:var(--accent)}
+
+/* stamps */
+.sevtag{border-radius:2px;background:var(--panel);letter-spacing:1.2px;padding:4px 10px}
+.chip{border-radius:2px;background:var(--panel)}
+.stampline{font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+
+/* shield gauge */
+.shieldg{flex:none}
+.shieldg text{font-family:var(--ui)}
+
+/* board pack as formal document */
+.pack-title{font-family:'Source Serif 4',serif}
+.pack-verdict{border:1.5px solid var(--text);border-radius:3px;background:var(--panel);color:var(--muted)}
+.modal{border-radius:3px;background:var(--panel)}
+.modal-veil{background:rgba(32,36,31,.45)}
+
+/* misc light-paper fixes */
+.outlook{border:1px solid var(--line);background:#f8f5ec;border-radius:3px}
+.outlook small{color:var(--accent)}
+.reg-verdict{background:#f8f5ec;border-left:2px solid var(--accent);color:var(--text)}
+.radar-adopt{border-left:2px solid var(--accent)}
+.radar-next{border-left:2px solid var(--am)}
+.prep{border:1px dashed var(--accent);border-radius:3px}
+.prep-h{color:var(--accent)}
+.conndot{box-shadow:none}
+.abox{border-radius:3px;background:var(--panel)}
+.layer{border-radius:3px}
+.layer-biz{border-color:#c9c2ac}.layer-app{border-color:var(--accent);background:#f8f5ec}.layer-data{border-color:#c9c2ac}
+.cat-h{color:var(--text);border-bottom:1px solid var(--text);box-shadow:0 3px 0 #cfc8b2;padding-bottom:4px;display:inline-block}
+.co-switch{background:var(--panel)}
+.tag{color:var(--dim)}
+.g-track{stroke:var(--line)}
+.nist-peer{background:var(--panel)}

@@ -4,7 +4,7 @@ import { Card, Eyebrow, Bar, Tag, scoreColor } from "./ui.jsx";
 
 const LAYERS = [
   { id: "biz", name: "Business Layer", note: "Services & stakeholders",
-    boxes: ["Container Terminal Ops", "Finance & Treasury", "Customer Portal & CRM", "Partner Integrations"] },
+    boxes: null }, // filled from company business services
   { id: "app", name: "Application Layer", note: "The engine — Perisai core",
     boxes: ["Ingestion & Normalisation", "Control–Evidence Core", "Risk Engine", "Compliance Mapping", "Narrative & Reporting"] },
   { id: "data", name: "Data Layer", note: "Connected sources", boxes: null }, // rendered as connectors
@@ -12,7 +12,7 @@ const LAYERS = [
     boxes: ["840 endpoints", "71 privileged accounts", "152 OT devices", "41 backup jobs", "3 cloud tenants"] },
 ];
 
-export default function Admin({ ps, enabled, toggle }) {
+export default function Admin({ ps, enabled, toggle, D }) {
   return (
     <div className="grid">
       <Card span={12} delay={0}>
@@ -22,7 +22,9 @@ export default function Admin({ ps, enabled, toggle }) {
             <div key={L.id} className={`layer layer-${L.id}`}>
               <div className="layer-tab">{L.name}<small>{L.note}</small></div>
               <div className="layer-boxes">
-                {L.boxes
+                {L.id === "biz"
+                  ? [...new Set(D.RISKS.map((r) => r.service))].map((b) => <div key={b} className="abox">{b}</div>)
+                  : L.boxes
                   ? L.boxes.map((b) => <div key={b} className="abox">{b}</div>)
                   : CONNECTORS.map((c) => (
                       <button key={c.id}

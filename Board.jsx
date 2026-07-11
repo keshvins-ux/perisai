@@ -1,88 +1,112 @@
 import React, { useState } from "react";
-import { ORG, RISKS, SCENARIOS, REGULATORY, AUDIT, NIST, DECISIONS, SPEND, INCIDENTS, VENDORS, PEOPLE, CONTROLS, CONF_META } from "./data.js";
+import { CONTROLS, CONF_META } from "./data.js";
 import { Card, Eyebrow, Spark, Donut, Delta, Tag, Bar, Modal, scoreColor, riskColor } from "./ui.jsx";
 
-export default function Board({ ps, goAdmin }) {
+export default function Board({ ps, goAdmin, D }) {
   const [lineage, setLineage] = useState(null);
   const [compTab, setCompTab] = useState("reg");
+  const [pack, setPack] = useState(false);
 
   const crown = ps.riskState.filter((r) => r.crown);
   const nonCrown = ps.riskState.filter((r) => !r.crown);
   const avg = (a) => Math.round(a.reduce((x, r) => x + r.score, 0) / a.length);
-  const compAvg = Math.round(REGULATORY.reduce((a, f) => a + f.score, 0) / REGULATORY.length);
-  const overApp = ps.riskIndex > ORG.appetite;
+  const compAvg = Math.round(D.REGULATORY.reduce((a, f) => a + f.score, 0) / D.REGULATORY.length);
+  const overApp = ps.riskIndex > D.ORG.appetite;
+  const improving = ps.riskState.filter((r) => r.score < r.prev).length;
+  const worstScen = D.SCENARIOS.reduce((a, s) => (s.high > a.high ? s : a), D.SCENARIOS[0]);
+  const weakVendors = D.VENDORS.filter((v) => v.posture < 60).length;
+  const dueNow = D.DECISIONS.filter((d) => d.due === "This meeting").length;
+  const threatMeta = D.RADAR.some((t) => t.level === "elevated")
+    ? { label: "ELEVATED", color: "var(--co)" }
+    : D.RADAR.some((t) => t.level === "rising")
+      ? { label: "RISING", color: "var(--am)" }
+      : { label: "STABLE", color: "var(--em)" };
 
   return (
-    <div className="grid">
-      {/* ── Headline row ─────────────────────────────────────── */}
-      <Card span={4} delay={0}>
-        <Eyebrow>Risk position vs appetite</Eyebrow>
-        <div className="headline">
-          <Donut value={ps.riskIndex} color={overApp ? "var(--co)" : "var(--em)"} label="" />
-          <div>
-            <div className="head-big" style={{ color: overApp ? "var(--co)" : "var(--em)" }}>
-              {overApp ? "ABOVE" : "WITHIN"} APPETITE
-            </div>
-            <div className="head-sub">Board-set appetite: <b>{ORG.appetite}</b> · Current index: <b>{ps.riskIndex}</b></div>
-            <Delta now={ps.riskIndex} prev={73} goodDown />
-          </div>
+    <div className="boardwrap">
+      {/* 1 · THE ANSWER */}
+      <section className="hero rise">
+        <div className="hero-eyebrow row-sb">
+          <span>{D.ORG.name} · {D.ORG.period} · cyber position in one view</span>
+          <button className="packbtn" onClick={() => setPack(true)}>⎙ Generate board pack</button>
         </div>
-      </Card>
+        <h1 className="hero-verdict">
+          Cyber risk is{" "}
+          <em style={{ color: overApp ? "var(--co)" : "var(--em)" }}>
+            {overApp ? "above" : "within"} the appetite you set
+          </em>
+          , compliance is <em style={{ color: scoreColor(compAvg) }}>partial and improving</em>,
+          and <em style={{ color: "var(--accent)" }}>{dueNow} decisions need you today</em>.
+        </h1>
 
-      <Card span={4} delay={60}>
-        <Eyebrow>Compliance position</Eyebrow>
-        <div className="headline">
-          <Donut value={compAvg} color={scoreColor(compAvg)} />
-          <div>
-            <div className="head-big" style={{ color: scoreColor(compAvg) }}>PARTIAL</div>
-            <div className="head-sub">Across RMiT · GTRM · PDPA</div>
-            <Delta now={compAvg} prev={64} goodDown={false} />
-          </div>
+        <div className="hero-nums">
+          <button className="hnum" onClick={() => document.getElementById("fold-risk")?.scrollIntoView({ behavior: "smooth" })}>
+            <span className="hnum-v" style={{ color: overApp ? "var(--co)" : "var(--em)" }}>{ps.riskIndex}<small>/{D.ORG.appetite}</small></span>
+            <span className="hnum-l">risk index vs appetite</span>
+            <Delta now={ps.riskIndex} prev={D.ORG.prevIndex} goodDown />
+          </button>
+          <button className="hnum" onClick={() => document.getElementById("fold-comp")?.scrollIntoView({ behavior: "smooth" })}>
+            <span className="hnum-v" style={{ color: scoreColor(compAvg) }}>{compAvg}<small>%</small></span>
+            <span className="hnum-l">compliance across RMiT · GTRM · PDPA</span>
+            <Delta now={compAvg} prev={Math.round(D.REGULATORY.reduce((a,f)=>a+f.prev,0)/D.REGULATORY.length)} goodDown={false} />
+          </button>
+          <button className="hnum" onClick={goAdmin}>
+            <span className="hnum-v" style={{ color: scoreColor(ps.machinePct) }}>{ps.machinePct}<small>%</small></span>
+            <span className="hnum-l">of this report verified from live systems</span>
+            <span className="hnum-x">{ps.coverage}% of estate visible{ps.blind.length > 0 ? " · ⚠ sources offline" : ""}</span>
+          </button>
+          <button className="hnum" onClick={() => document.getElementById("fold-radar")?.scrollIntoView({ behavior: "smooth" })}>
+            <span className="hnum-v" style={{ color: threatMeta.color, fontSize: 25, lineHeight: 1.3 }}>{threatMeta.label}</span>
+            <span className="hnum-l">sector threat level — {D.ORG.sector.split(" (")[0].toLowerCase()}</span>
+            <span className="hnum-x">{D.RADAR.length} tracked campaigns · each with an adoptable action</span>
+          </button>
         </div>
-      </Card>
+      </section>
 
-      <Card span={4} delay={120}>
-        <Eyebrow right={<button className="ghost" onClick={goAdmin}>Admin →</button>}>Confidence in this report</Eyebrow>
-        <div className="conf-strip">
-          <div className="conf-line">
-            <span>Estate visibility</span>
-            <Bar pct={ps.coverage} color={scoreColor(ps.coverage)} /><b>{ps.coverage}%</b>
-          </div>
-          <div className="conf-line">
-            <span>Machine-verified evidence</span>
-            <Bar pct={ps.machinePct} color={scoreColor(ps.machinePct)} /><b>{ps.machinePct}%</b>
-          </div>
-          <div className="conf-chips">
-            {Object.entries(ps.mix).map(([k, n]) => (
-              <span key={k} className="chip" style={{ color: CONF_META[k].color }}>
-                <i style={{ background: CONF_META[k].color }} />{n} {CONF_META[k].label}
-              </span>
-            ))}
-          </div>
-          {ps.blind.length > 0 && (
-            <div className="blindwarn">⚠ {ps.blind.length} source{ps.blind.length > 1 ? "s" : ""} disconnected — parts of this report are self-attested only</div>
-          )}
-        </div>
-      </Card>
-
-      {/* ── Decisions required ───────────────────────────────── */}
-      <Card span={12} delay={180} className="decisions">
+      {/* 2 · WHAT WE NEED FROM YOU */}
+      <section className="card decisions rise" style={{ animationDelay: "80ms" }}>
         <Eyebrow>Decisions required from the board</Eyebrow>
         <div className="dec-row">
-          {DECISIONS.map((d) => (
+          {D.DECISIONS.map((d) => (
             <div key={d.id} className="dec">
               <Tag color={d.type === "FUNDING" ? "var(--am)" : d.type === "ACCEPTANCE" ? "var(--co)" : "var(--accent)"}>{d.type}</Tag>
               <div className="dec-ask">{d.ask}</div>
               <div className="dec-why">{d.why}</div>
+              {D.IFASKED[d.id] && <div className="dec-def">If deferred / challenged: <IfAsked qa={D.IFASKED[d.id]} /></div>}
               <div className="dec-due">Due: {d.due}</div>
             </div>
           ))}
         </div>
-      </Card>
+      </section>
 
-      {/* ── Risk movement ────────────────────────────────────── */}
-      <Card span={7} delay={240}>
-        <Eyebrow>Risk movement — crown jewels vs rest of estate</Eyebrow>
+      {/* 3 · THE PROOF, ON DEMAND */}
+      <div className="bsec rise" style={{ animationDelay: "140ms" }}>Threats & exposure</div>
+
+      <Fold id="fold-radar" title="Threat intelligence — sector radar" delay={170}
+        summary={<><b style={{ color: "var(--am)" }}>{D.RADAR.length}</b> campaigns tracked · what happens next, and what we adopt</>}>
+        <div className="outlook"><small>Next-quarter outlook</small>{D.OUTLOOK}</div>
+        {D.RADAR.map((t) => (
+          <div key={t.id} className="radar">
+            <div className="radar-top">
+              <Tag color={t.level === "elevated" ? "var(--co)" : t.level === "rising" ? "var(--am)" : "var(--dim)"}>{t.level}</Tag>
+              <span className="radar-h">{t.headline}</span>
+              <span className="prep-chip" style={{ color: t.prep === "ready" ? "var(--em)" : t.prep === "partial" ? "var(--am)" : "var(--co)" }}>
+                preparedness: {t.prep}
+              </span>
+            </div>
+            <div className="radar-grid">
+              <div><small>Global picture</small>{t.global}</div>
+              <div><small>Why it matters to us</small>{t.relevance}</div>
+              <div className="radar-next"><small>What's next</small>{t.next}</div>
+              <div className="radar-adopt"><small>What we adopt</small>{t.adopt}</div>
+            </div>
+          </div>
+        ))}
+        <div className="footnote">Curated monthly for your sector by Perisai analysts — every item ends in an action, not just news.</div>
+      </Fold>
+
+      <Fold id="fold-risk" title="Risk movement" delay={180}
+        summary={<><b>{improving} of {ps.riskState.length}</b> risks improving · crown-jewel average <b style={{ color: riskColor(avg(crown)) }}>{avg(crown)}</b></>}>
         <div className="cj-split">
           <div className="cj-box">
             <div className="cj-h">◆ Crown jewels <b style={{ color: riskColor(avg(crown)) }}>{avg(crown)}</b></div>
@@ -94,13 +118,12 @@ export default function Board({ ps, goAdmin }) {
           </div>
         </div>
         <div className="footnote">Click any risk to trace its lineage — signal → asset → control → obligation.</div>
-      </Card>
+      </Fold>
 
-      {/* ── Scenario exposure (CRQ) ──────────────────────────── */}
-      <Card span={5} delay={300}>
-        <Eyebrow>Scenario exposure (RM millions)</Eyebrow>
-        {SCENARIOS.map((s) => (
-          <button key={s.id} className="scen" onClick={() => setLineage(RISKS.find((r) => r.id === s.linked))}>
+      <Fold id="fold-scen" title="What it could cost us" delay={220}
+        summary={<>Worst credible case <b style={{ color: "var(--am)" }}>RM {worstScen.high}m</b> ({worstScen.name.toLowerCase()}) · 4 scenarios modelled</>}>
+        {D.SCENARIOS.map((s) => (
+          <button key={s.id} className="scen" onClick={() => setLineage(D.RISKS.find((r) => r.id === s.linked))}>
             <div className="scen-top">
               <span className="scen-name">{s.name}</span>
               <span className="scen-range">RM {s.low}–{s.high}m</span>
@@ -112,25 +135,26 @@ export default function Board({ ps, goAdmin }) {
           </button>
         ))}
         <div className="footnote">Ranges derived from asset value, control coverage & current gaps — not point estimates.</div>
-      </Card>
+      </Fold>
 
-      {/* ── Compliance block ─────────────────────────────────── */}
-      <Card span={7} delay={360}>
-        <Eyebrow right={
-          <div className="minitabs">
-            {[["reg", "Regulatory"], ["aud", "Audit"], ["bench", "Benchmark"]].map(([k, l]) => (
-              <button key={k} className={compTab === k ? "on" : ""} onClick={() => setCompTab(k)}>{l}</button>
-            ))}
-          </div>
-        }>Compliance</Eyebrow>
 
-        {compTab === "reg" && REGULATORY.map((f) => (
+      <div className="bsec">Compliance & assurance</div>
+
+      <Fold id="fold-comp" title="Compliance position" delay={260}
+        summary={<>RMiT <b style={{ color: scoreColor(74) }}>74%</b> · GTRM <b style={{ color: scoreColor(69) }}>69%</b> · PDPA <b style={{ color: scoreColor(63) }}>63%</b> — all improving</>}>
+        <div className="minitabs" style={{ marginBottom: 14 }}>
+          {[["reg", "Regulatory"], ["aud", "Audit"], ["bench", "Benchmark"]].map(([k, l]) => (
+            <button key={k} className={compTab === k ? "on" : ""} onClick={() => setCompTab(k)}>{l}</button>
+          ))}
+        </div>
+        {compTab === "reg" && D.REGULATORY.map((f) => (
           <div key={f.id} className="fw">
             <div className="fw-head">
               <span className="fw-name">{f.name}<small>{f.note}</small></span>
               <Delta now={f.score} prev={f.prev} goodDown={false} />
               <b style={{ color: scoreColor(f.score) }}>{f.score}%</b>
             </div>
+            <div className="reg-verdict">{D.REG_VERDICT[f.id]}</div>
             <div className="fw-doms">
               {f.domains.map(([d, v]) => (
                 <span key={d} className="dom" style={{ borderColor: scoreColor(v) }}>{d} <b style={{ color: scoreColor(v) }}>{v}</b></span>
@@ -138,8 +162,7 @@ export default function Board({ ps, goAdmin }) {
             </div>
           </div>
         ))}
-
-        {compTab === "aud" && AUDIT.map((a) => (
+        {compTab === "aud" && D.AUDIT.map((a) => (
           <div key={a.id} className="fw">
             <div className="fw-head">
               <span className="fw-name">{a.name}<small>{a.stage}</small></span>
@@ -154,10 +177,9 @@ export default function Board({ ps, goAdmin }) {
             </div>
           </div>
         ))}
-
         {compTab === "bench" && (
           <div className="nist">
-            {NIST.map(([fn, cur, tgt]) => (
+            {D.NIST.map(([fn, cur, tgt]) => (
               <div key={fn} className="nist-row">
                 <span className="nist-fn">{fn}</span>
                 <div className="nist-track">
@@ -168,45 +190,52 @@ export default function Board({ ps, goAdmin }) {
                 <span className="nist-val">{cur.toFixed(1)} <small>/ tgt {tgt.toFixed(1)}</small></span>
               </div>
             ))}
-            <div className="footnote">NIST CSF 2.0 maturity (0–4). ◦ marker = peer median · | = board target.</div>
+            <div className="footnote">D.NIST CSF 2.0 maturity (0–4). ◦ marker = peer median · | = board target.</div>
           </div>
         )}
-      </Card>
+      </Fold>
 
-      {/* ── Investment ROI ───────────────────────────────────── */}
-      <Card span={5} delay={420}>
-        <Eyebrow>Security investment vs residual risk</Eyebrow>
+      <div className="bsec">Performance & accountability</div>
+
+      <Fold id="fold-roi" title="What your investment bought" delay={300}
+        summary={<><b>RM {(D.SPEND.at(-1)[1] / 1000).toFixed(2)}m</b> invested · residual risk <b style={{ color: "var(--em)" }}>down {D.SPEND[0][2] - D.SPEND.at(-1)[2]} points</b></>}>
         <div className="roi">
           <div className="roi-col">
-            <div className="roi-num">RM {(SPEND[SPEND.length - 1][1] / 1000).toFixed(2)}m</div>
+            <div className="roi-num">RM {(D.SPEND[D.SPEND.length - 1][1] / 1000).toFixed(2)}m</div>
             <div className="roi-lab">cumulative spend (4 qtrs)</div>
-            <Spark data={SPEND.map((s) => s[1])} color="var(--accent)" />
+            <Spark data={D.SPEND.map((s) => s[1])} color="var(--accent)" />
           </div>
           <div className="roi-col">
-            <div className="roi-num" style={{ color: "var(--em)" }}>−13 pts</div>
+            <div className="roi-num" style={{ color: "var(--em)" }}>−{D.SPEND[0][2] - D.SPEND.at(-1)[2]} pts</div>
             <div className="roi-lab">residual risk index</div>
-            <Spark data={SPEND.map((s) => s[2])} color="var(--em)" />
+            <Spark data={D.SPEND.map((s) => s[2])} color="var(--em)" />
           </div>
         </div>
-        <div className="roi-verdict">Each RM 100k invested this year removed ~1.4 risk-index points — efficiency improving quarter on quarter.</div>
-      </Card>
+        <div className="roi-verdict">{D.ROI_NOTE}</div>
+        <div className="init-h">What each approval delivered</div>
+        {D.INITIATIVES.map((i) => (
+          <div key={i.name} className="init-row">
+            <span className="init-name">{i.name}<small>RM {i.spend}k</small></span>
+            <span className="init-effect">{i.effect}</span>
+            <span className="init-metric">{i.metric}</span>
+          </div>
+        ))}
+      </Fold>
 
-      {/* ── Incidents ────────────────────────────────────────── */}
-      <Card span={4} delay={480}>
-        <Eyebrow>What actually happened — {ORG.period}</Eyebrow>
-        {INCIDENTS.quarter.map(([k, v]) => (
+      <Fold id="fold-inc" title="What actually happened this quarter" delay={340}
+        summary={<><b style={{ color: D.INCIDENTS.quarter.at(-1)[1] === 0 ? "var(--em)" : "var(--co)" }}>{D.INCIDENTS.quarter.at(-1)[1]}</b> reportable breaches · detection <b>{D.INCIDENTS.mttd.at(-1)}h</b> and falling</>}>
+        {D.INCIDENTS.quarter.map(([k, v]) => (
           <div key={k} className="inc-row"><span>{k}</span><b style={{ color: v === 0 ? "var(--em)" : "var(--text)" }}>{v}</b></div>
         ))}
         <div className="inc-mt">
-          <div><small>Mean time to detect</small><Spark data={INCIDENTS.mttd} color="var(--em)" invert={false} /><b>22h</b></div>
-          <div><small>Mean time to respond</small><Spark data={INCIDENTS.mttr} color="var(--em)" /><b>14h</b></div>
+          <div><small>Mean time to detect</small><Spark data={D.INCIDENTS.mttd} color="var(--em)" /><b>{D.INCIDENTS.mttd.at(-1)}h</b></div>
+          <div><small>Mean time to respond</small><Spark data={D.INCIDENTS.mttr} color="var(--em)" /><b>{D.INCIDENTS.mttr.at(-1)}h</b></div>
         </div>
-      </Card>
+      </Fold>
 
-      {/* ── Third party ──────────────────────────────────────── */}
-      <Card span={4} delay={540}>
-        <Eyebrow>Third-party exposure</Eyebrow>
-        {VENDORS.map((v) => (
+      <Fold id="fold-ven" title="Third-party exposure" delay={380}
+        summary={<><b style={{ color: weakVendors ? "var(--co)" : "var(--em)" }}>{weakVendors}</b> critical vendor{weakVendors === 1 ? "" : "s"} below assurance threshold</>}>
+        {D.VENDORS.map((v) => (
           <div key={v.name} className="ven">
             <div className="ven-l">
               <span className="ven-name">{v.crown ? "◆ " : ""}{v.name}</span>
@@ -216,13 +245,12 @@ export default function Board({ ps, goAdmin }) {
             <b style={{ color: scoreColor(v.posture) }}>{v.posture}</b>
           </div>
         ))}
-      </Card>
+      </Fold>
 
-      {/* ── People ───────────────────────────────────────────── */}
-      <Card span={4} delay={600}>
-        <Eyebrow>Capability & people</Eyebrow>
+      <Fold id="fold-ppl" title="Capability & people" delay={420}
+        summary={<><b style={{ color: "var(--co)" }}>{D.PEOPLE.roles.filter(([,ok])=>!ok).length}</b> key role{D.PEOPLE.roles.filter(([,ok])=>!ok).length===1?"":"s"} unfilled · phishing clicks down to <b style={{ color: "var(--em)" }}>{D.PEOPLE.phishing.at(-1)}%</b></>}>
         <div className="ppl-roles">
-          {PEOPLE.roles.map(([r, ok]) => (
+          {D.PEOPLE.roles.map(([r, ok]) => (
             <span key={r} className="chip" style={{ color: ok ? "var(--em)" : "var(--co)" }}>
               <i style={{ background: ok ? "var(--em)" : "var(--co)" }} />{r}
             </span>
@@ -230,16 +258,70 @@ export default function Board({ ps, goAdmin }) {
         </div>
         <div className="ppl-phish">
           <small>Phishing-sim click rate</small>
-          <Spark data={PEOPLE.phishing} color="var(--em)" /><b>7.1%</b>
+          <Spark data={D.PEOPLE.phishing} color="var(--em)" /><b>{D.PEOPLE.phishing.at(-1)}%</b>
         </div>
-        <div className="blindwarn">⚠ {PEOPLE.spof}</div>
-      </Card>
+        <div className="blindwarn">⚠ {D.PEOPLE.spof}</div>
+      </Fold>
 
-      {/* ── Lineage modal ────────────────────────────────────── */}
       <Modal open={!!lineage} onClose={() => setLineage(null)}>
-        {lineage && <Lineage r={lineage} ps={ps} />}
+        {lineage && <Lineage r={lineage} ps={ps} D={D} />}
+      </Modal>
+
+      <Modal open={pack} onClose={() => setPack(false)}>
+        <BoardPack ps={ps} compAvg={compAvg} overApp={overApp} dueNow={dueNow} D={D} />
       </Modal>
     </div>
+  );
+}
+
+function IfAsked({ qa }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="ifasked">
+      <button className="ifasked-btn" onClick={() => setOpen(!open)}>{open ? "hide" : "view prep note"}</button>
+      {open && <span className="ifasked-body"><em>"{qa.q}"</em> — {qa.a}</span>}
+    </span>
+  );
+}
+
+function BoardPack({ ps, compAvg, overApp, dueNow, D }) {
+  return (
+    <div className="pack">
+      <div className="eyebrow">Board pack — one page (preview of generated output)</div>
+      <h2 className="pack-title">Cyber Risk & Compliance Position — {D.ORG.name}</h2>
+      <div className="pack-meta">{D.ORG.period} · Prepared by CIO · Generated by Perisai · evidence lineage available on request</div>
+      <p className="pack-verdict">
+        Cyber risk is <b style={{ color: overApp ? "var(--co)" : "var(--em)" }}>{overApp ? "above" : "within"} board appetite</b> at {ps.riskIndex} (appetite {D.ORG.appetite}), trending down from {D.ORG.prevIndex} last quarter.
+        Compliance stands at <b style={{ color: "var(--am)" }}>{compAvg}%</b> across RMiT, GTRM and PDPA — all improving.
+        <b> {dueNow} decisions require the board today.</b> {ps.machinePct}% of this report is machine-verified from live systems; {ps.coverage}% of the estate is visible.
+      </p>
+      <div className="pack-h">Decisions required</div>
+      {D.DECISIONS.map((d) => (
+        <div key={d.id} className="pack-dec">
+          <b>{d.type}</b> — {d.ask}
+          {D.IFASKED[d.id] && <small> If deferred: {D.IFASKED[d.id].a}</small>}
+        </div>
+      ))}
+      <div className="pack-h">What your investment delivered</div>
+      <p className="pack-line">RM {(D.SPEND[D.SPEND.length-1][1]/1000).toFixed(2)}m invested over four quarters; residual risk down {D.SPEND[0][2] - D.SPEND.at(-1)[2]} points. {D.INITIATIVES[0].name.split(" (")[0]}: {D.INITIATIVES[0].effect.toLowerCase()}. {D.INITIATIVES[2].name.split(" (")[0]}: {D.INITIATIVES[2].effect.toLowerCase()}.</p>
+      <div className="pack-h">Regulatory position in one line each</div>
+      {D.REGULATORY.map((f) => <p key={f.id} className="pack-line"><b>{f.name}:</b> {D.REG_VERDICT[f.id]}</p>)}
+      <div className="pack-foot">Full product: exports to PDF/Word with your letterhead, appendix of evidence lineage, and the minuted decision record. Demo shows generated content only.</div>
+    </div>
+  );
+}
+
+function Fold({ id, title, summary, children, delay = 0 }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <section id={id} className={`fold rise ${open ? "open" : ""}`} style={{ animationDelay: `${delay}ms` }}>
+      <button className="fold-head" onClick={() => setOpen(!open)}>
+        <span className="fold-title">{title}</span>
+        <span className="fold-sum">{summary}</span>
+        <span className="chev">{open ? "−" : "+"}</span>
+      </button>
+      {open && <div className="fold-body">{children}</div>}
+    </section>
   );
 }
 
@@ -253,8 +335,9 @@ function RiskRow({ r, onLineage }) {
   );
 }
 
-function Lineage({ r, ps }) {
+function Lineage({ r, ps, D }) {
   const ctls = CONTROLS.filter((c) => r.controls.includes(c.id));
+  const cname = { m365: "Microsoft 365 / Defender", entra: "Entra ID", rapid7: "Rapid7 InsightVM", nozomi: "Nozomi Guardian", nessus: "Nessus (OT)", veeam: "Veeam", pam: "Delinea PAM", jira: "Jira SM" };
   return (
     <div className="lineage">
       <div className="eyebrow">Lineage — how this number is built</div>
@@ -264,7 +347,7 @@ function Lineage({ r, ps }) {
         <div className="lin-step">
           <div className="lin-h">1 · Signals</div>
           {r.connectors.length ? r.connectors.map((c) => (
-            <div key={c} className="lin-item">{ps.blind.find((b) => b.id === c) ? "⚠ " : "● "}{c === "m365" ? "Microsoft 365 / Defender" : c === "entra" ? "Entra ID" : c === "rapid7" ? "Rapid7 InsightVM" : c === "nozomi" ? "Nozomi Guardian" : c === "nessus" ? "Nessus (OT)" : c === "veeam" ? "Veeam" : c === "pam" ? "Delinea PAM" : c === "jira" ? "Jira SM" : c}</div>
+            <div key={c} className="lin-item">{ps.blind.find((b) => b.id === c) ? "⚠ " : "● "}{cname[c] || c}</div>
           )) : <div className="lin-item">◌ No live feed — analyst-attested only</div>}
         </div>
         <span className="lin-arrow">→</span>
@@ -292,8 +375,15 @@ function Lineage({ r, ps }) {
         </div>
       </div>
       <div className="lin-verdict">
-        Board statement: <b>“{r.name}” scores {r.score}{r.degraded ? " (confidence reduced — a data source is offline)" : ""}, {r.score > 62 ? "above" : "within"} appetite.</b>
+        Board statement: <b>"{r.name}" scores {r.score}{r.degraded ? " (confidence reduced — a data source is offline)" : ""}, {r.score > 62 ? "above" : "within"} appetite.</b>
       </div>
+      {D.IFASKED[r.id] && (
+        <div className="prep">
+          <div className="prep-h">If asked in the boardroom</div>
+          <div className="prep-q">"{D.IFASKED[r.id].q}"</div>
+          <div className="prep-a">{D.IFASKED[r.id].a}</div>
+        </div>
+      )}
     </div>
   );
 }

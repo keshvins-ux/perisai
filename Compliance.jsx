@@ -1,12 +1,12 @@
 import React from "react";
-import { REGULATORY, AUDIT, NIST, CONTROLS, CONF_META } from "./data.js";
+import { CONTROLS, CONF_META } from "./data.js";
 import { Card, Eyebrow, Delta, Bar, Tag, scoreColor } from "./ui.jsx";
 
-export default function Compliance({ ps }) {
+export default function Compliance({ ps, D }) {
   const pdpaCtls = CONTROLS.filter((c) => c.maps.pdpa);
   return (
     <div className="grid">
-      {REGULATORY.map((f, i) => (
+      {D.REGULATORY.map((f, i) => (
         <Card span={4} delay={i * 70} key={f.id}>
           <Eyebrow>{f.name}</Eyebrow>
           <div className="comp-head">
@@ -24,7 +24,7 @@ export default function Compliance({ ps }) {
 
       <Card span={7} delay={240}>
         <Eyebrow>Audit readiness</Eyebrow>
-        {AUDIT.map((a) => (
+        {D.AUDIT.map((a) => (
           <div key={a.id} className="fw">
             <div className="fw-head">
               <span className="fw-name">{a.name}<small>{a.stage}</small></span>
@@ -40,8 +40,8 @@ export default function Compliance({ ps }) {
           </div>
         ))}
         <div className="nist" style={{ marginTop: 18 }}>
-          <div className="eyebrow">NIST CSF 2.0 benchmark</div>
-          {NIST.map(([fn, cur, tgt]) => (
+          <div className="eyebrow">D.NIST CSF 2.0 benchmark</div>
+          {D.NIST.map(([fn, cur, tgt]) => (
             <div key={fn} className="nist-row">
               <span className="nist-fn">{fn}</span>
               <div className="nist-track">

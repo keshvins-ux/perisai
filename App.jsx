@@ -1,17 +1,20 @@
 import React, { useMemo, useState } from "react";
-import { ORG, CONNECTORS, computePlatformState } from "./data.js";
+import { CONNECTORS, COMPANIES, computePlatformState } from "./data.js";
 import Board from "./Board.jsx";
 import Risk from "./Risk.jsx";
 import Compliance from "./Compliance.jsx";
 import Admin from "./Admin.jsx";
+import Connectors from "./Connectors.jsx";
 
 export default function App() {
   const [tab, setTab] = useState("board");
+  const [co, setCo] = useState("meridian");
+  const D = COMPANIES[co];
   const [enabled, setEnabled] = useState(
     Object.fromEntries(CONNECTORS.map((c) => [c.id, true]))
   );
   const toggle = (id) => setEnabled((e) => ({ ...e, [id]: !e[id] }));
-  const ps = useMemo(() => computePlatformState(enabled), [enabled]);
+  const ps = useMemo(() => computePlatformState(enabled, D.RISKS), [enabled, co]);
 
   return (
     <div className="root">
@@ -22,13 +25,15 @@ export default function App() {
           <span className="tag">RISK&nbsp;&amp;&nbsp;COMPLIANCE&nbsp;INTELLIGENCE</span>
         </div>
         <div className="org">
-          <div className="org-name">{ORG.name}</div>
-          <div className="org-meta">{ORG.sector} · {ORG.employees} staff · {ORG.period} · DEMO DATA</div>
+          <select className="co-switch" value={co} onChange={(e) => setCo(e.target.value)}>
+            {Object.values(COMPANIES).map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+          </select>
+          <div className="org-meta">{D.ORG.sector} · {D.ORG.employees} staff · {D.ORG.period} · DEMO DATA</div>
         </div>
       </header>
 
       <nav className="tabs">
-        {[["board", "Board View"], ["risk", "Risk Module"], ["comp", "Compliance Module"], ["admin", "Admin & Architecture"]].map(([k, l]) => (
+        {[["board", "Board View"], ["risk", "Risk Module"], ["comp", "Compliance Module"], ["conn", "Connectors"], ["admin", "Admin & Architecture"]].map(([k, l]) => (
           <button key={k} className={`tab ${tab === k ? "on" : ""}`} onClick={() => setTab(k)}>{l}</button>
         ))}
         <div className="tab-strip">
@@ -38,13 +43,14 @@ export default function App() {
       </nav>
 
       <main className="stage">
-        {tab === "board" && <Board ps={ps} goAdmin={() => setTab("admin")} />}
-        {tab === "risk" && <Risk ps={ps} />}
-        {tab === "comp" && <Compliance ps={ps} />}
-        {tab === "admin" && <Admin ps={ps} enabled={enabled} toggle={toggle} />}
+        {tab === "board" && <Board key={co} ps={ps} goAdmin={() => setTab("admin")} D={D} />}
+        {tab === "risk" && <Risk key={co} ps={ps} D={D} />}
+        {tab === "comp" && <Compliance key={co} ps={ps} D={D} />}
+        {tab === "conn" && <Connectors />}
+        {tab === "admin" && <Admin key={co} ps={ps} enabled={enabled} toggle={toggle} D={D} />}
       </main>
 
-      <footer className="foot">Perisai demo · fictional data (Meridian Logistics Sdn Bhd) · monitoring & readiness only — not certification or legal advice</footer>
+      <footer className="foot">Perisai demo · all companies and data fictional · monitoring & readiness only — not certification or legal advice</footer>
     </div>
   );
 }

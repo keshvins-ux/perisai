@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { SCENARIOS } from "./data.js";
+
 import { Card, Eyebrow, Delta, Tag, Bar, riskColor } from "./ui.jsx";
 
-export default function Risk({ ps }) {
+export default function Risk({ ps, D }) {
   const [filter, setFilter] = useState("all");
   const rows = ps.riskState.filter((r) =>
     filter === "all" ? true : filter === "crown" ? r.crown : !r.crown
@@ -43,7 +43,7 @@ export default function Risk({ ps }) {
       <Card span={12} delay={200}>
         <Eyebrow>Scenario exposure detail</Eyebrow>
         <div className="scen-grid">
-          {SCENARIOS.map((s) => (
+          {D.SCENARIOS.map((s) => (
             <div key={s.id} className="scen-card">
               <div className="scen-name">{s.name}</div>
               <div className="scen-big">RM {s.low}–{s.high}m <small>{s.likely}</small></div>
